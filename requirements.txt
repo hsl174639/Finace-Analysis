@@ -1,0 +1,9 @@
+flask
+langgraph
+langchain-groq
+yfinance
+pandas
+python-dotenv
+statsmodels
+numpy-financial
+requests

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enterprise Agentic AI Workspace</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b;}
+        .header { text-align: center; margin-bottom: 20px; color: #0f172a; font-weight: 700; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1400px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .card-title { font-size: 1.1em; font-weight: 600; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;}
+        input, select, textarea { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; width: 100%; box-sizing: border-box; margin-bottom: 10px;}
+        textarea { height: 80px; resize: vertical; }
+        button { padding: 10px 15px; font-weight: 600; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; width: 100%;}
+        button:hover { background-color: #1d4ed8; }
+        button.secondary { background-color: #475569; margin-top: 10px;}
+        button.secondary:hover { background-color: #334155; }
+        .tvm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .tvm-result { margin-top: 10px; padding: 10px; background-color: #f8fafc; border-radius: 4px; font-weight: 600; text-align: center; color: #0f172a; border: 1px dashed #cbd5e1;}
+        .report-box { background: #f8fafc; padding: 15px; border-radius: 6px; min-height: 300px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; overflow-y: auto;}
+        .loading { color: #d97706; font-weight: 600; font-size: 0.9em;}
+    </style>
+</head>
+<body>
+
+<h1 class="header">📈 Enterprise Agentic AI Workspace</h1>
+
+<div class="grid-container">
+    
+    <div class="column">
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-title">⚙️ Core Workflow Parameters</div>
+            <label>Asset Ticker:</label>
+            <input type="text" id="ticker" value="D05.SI" placeholder="e.g., D05.SI for DBS">
+            
+            <label>Human-in-the-Loop Intelligence (News/Rumors):</label>
+            <textarea id="news_input" placeholder="Paste unstructured market intelligence here. The Agent will run sentiment analysis and integrate it into the final risk assessment..."></textarea>
+            
+            <button onclick="startAnalysis()">Run Multi-Agent Risk Assessment</button>
+            <div id="loading_agent" class="loading" style="margin-top: 10px; text-align: center;"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📄 Synthesized Risk Report</div>
+            <div class="report-box" id="report">
+                System standing by. Please initiate the workflow.
+            </div>
+        </div>
+    </div>
+
+    <div class="column">
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-title">
+                <span>🧮 Time Value of Money (TVM) Calculator</span>
+                <span style="font-size: 0.8em; color: #64748b;">Independent Tool</span>
+            </div>
+            
+            <label>Solve For:</label>
+            <select id="tvm_target" onchange="updateTVMInputs()">
+                <option value="pv">Present Value (PV)</option>
+                <option value="fv">Future Value (FV)</option>
+                <option value="pmt">Periodic Payment (PMT)</option>
+                <option value="rate">Interest Rate (I/Y)</option>
+                <option value="nper">Number of Periods (N)</option>
+            </select>
+
+            <div class="tvm-grid">
+                <div id="wrapper_rate"><label>Rate (e.g., 0.05 for 5%):</label><input type="number" step="0.0001" id="tvm_rate" value="0.05"></div>
+                <div id="wrapper_nper"><label>Periods (N):</label><input type="number" id="tvm_nper" value="10"></div>
+                <div id="wrapper_pmt"><label>Payment (PMT):</label><input type="number" id="tvm_pmt" value="0"></div>
+                <div id="wrapper_pv"><label>Present Value (PV):</label><input type="number" id="tvm_pv" value="-1000"></div>
+                <div id="wrapper_fv"><label>Future Value (FV):</label><input type="number" id="tvm_fv" value="1628.89"></div>
+            </div>
+            
+            <button class="secondary" onclick="runTVM()">Calculate TVM</button>
+            <div class="tvm-result" id="tvm_result">Result: ---</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📊 Pricing Trajectory & ARIMA Forecast</div>
+            <div style="height: 350px;">
+                <canvas id="stockChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // === TVM Dynamic UI Logic ===
+    function updateTVMInputs() {
+        const target = document.getElementById('tvm_target').value;
+        const allFields = ['rate', 'nper', 'pmt', 'pv', 'fv'];
+        
+        allFields.forEach(field => {
+            const wrapper = document.getElementById(`wrapper_${field}`);
+            if (field === target) {
+                wrapper.style.display = 'none';
+            } else {
+                wrapper.style.display = 'block';
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        updateTVMInputs();
+    });
+
+    // === TVM Calculation Logic ===
+    async function runTVM() {
+        const payload = {
+            target: document.getElementById('tvm_target').value,
+            rate: document.getElementById('tvm_rate').value,
+            nper: document.getElementById('tvm_nper').value,
+            pmt: document.getElementById('tvm_pmt').value,
+            pv: document.getElementById('tvm_pv').value,
+            fv: document.getElementById('tvm_fv').value
+        };
+
+        try {
+            const res = await fetch('/api/tvm', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            if(data.status === "success") {
+                document.getElementById('tvm_result').innerText = `Calculated ${payload.target.toUpperCase()}: ${data.result}`;
+            } else {
+                document.getElementById('tvm_result').innerText = `Error: ${data.message}`;
+            }
+        } catch(e) {
+            document.getElementById('tvm_result').innerText = "Network Error.";
+        }
+    }
+
+    // === Agent Core Logic ===
+    let stockChart;
+
+    async function startAnalysis() {
+        const ticker = document.getElementById('ticker').value;
+        const newsText = document.getElementById('news_input').value;
+        const reportDiv = document.getElementById('report');
+        const loadingDiv = document.getElementById('loading_agent');
+        
+        if(!ticker) return alert("Please provide a valid ticker symbol.");
+
+        loadingDiv.innerText = "Executing Multi-Agent Reasoning Pipeline...";
+        reportDiv.innerText = "[Agent Logs]\n1. Ingesting market fundamentals...\n2. Executing ARIMA forecast...\n3. Analyzing human intelligence sentiment...\n4. Synthesizing final report...";
+
+        try {
+            const [chartRes, agentRes] = await Promise.all([
+                fetch('/api/chart_data', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ticker}) }),
+                fetch('/api/analyze', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ticker: ticker, news_text: newsText}) }) 
+            ]);
+
+            const chartData = await chartRes.json();
+            const agentData = await agentRes.json();
+
+            if(chartData.status === "success") renderChart(ticker, chartData);
+            
+            if(agentData.status === "success") {
+                reportDiv.innerText = agentData.report;
+            } else {
+                reportDiv.innerText = "Execution Error: " + agentData.message;
+            }
+        } catch (error) {
+            reportDiv.innerText = "System error: " + error;
+        } finally {
+            loadingDiv.innerText = ""; 
+        }
+    }
+
+    // === Charting Logic ===
+    function renderChart(ticker, data) {
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        const allDates = data.history_dates.concat(data.future_dates);
+        const historyPrices = data.history_prices.concat(Array(data.future_dates.length).fill(null));
+        
+        const futurePrices = Array(data.history_dates.length - 1).fill(null);
+        futurePrices.push(data.history_prices[data.history_prices.length - 1]); 
+        data.future_prices.forEach(p => futurePrices.push(p));
+
+        if(stockChart) stockChart.destroy(); 
+
+        stockChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: allDates,
+                datasets: [
+                    { label: 'Historical Execution Price', data: historyPrices, borderColor: '#0f172a', borderWidth: 2, fill: false, tension: 0.1 },
+                    { label: 'ARIMA T+7 Projection', data: futurePrices, borderColor: '#b91c1c', borderDash: [5, 5], borderWidth: 2, fill: false, tension: 0.1 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+</script>
+</body>
+</html>
