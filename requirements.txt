@@ -7,3 +7,4 @@ python-dotenv
 statsmodels
 numpy-financial
 requests
+gunicorn
